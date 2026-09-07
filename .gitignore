@@ -1,0 +1,16 @@
+# Build output
+build/
+bin/
+
+# Object & binary files
+*.o
+*.obj
+*.exe
+*.out
+*.dylib
+*.so
+
+# System & IDE files
+.DS_Store
+.vscode/
+.idea/
