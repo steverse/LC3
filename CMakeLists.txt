@@ -2,15 +2,15 @@ cmake_minimum_required(VERSION 3.15...4.1)
 project(x14_lc3 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
-#Define the virtual target (compilation)
+#Define the virtual target 
 add_library(lc3_core STATIC src/lc3.cpp) #interphase vs dynamic vs static
 
-#Map the virtual target to the 'src' directory (linking/shows the preprocessor where to look for  when it sees an unknown #include directory i.e #include<lc3.hpp>)
+#Map the virtual target to the 'src' directory (linking/shows the preprocessor where to look for  when it sees an unknown #include directory eg #include<lc3.hpp>)
 target_include_directories(lc3_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 
 
-#  Automated Dependency Management: Download Catch2 directly from GitHub
+#  Download Catch2 directly from GitHub
 include(FetchContent)
 FetchContent_Declare(
   Catch2
