@@ -47,8 +47,8 @@ This repository uses CMake to manage compilation and the Catch2 framework for un
 
 **1. Clone and Configure**
 ```bash
-git clone [https://github.com/steverse/x14-engine.git](https://github.com/steverse/x14-engine.git)
-cd x14-engine
+git clone [https://github.com/steverse/x14-engine.git](https://github.com/steverse/LC3.git)
+cd LC3
 mkdir build && cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
 ```
@@ -56,14 +56,14 @@ cmake -DCMAKE_BUILD_TYPE=Release ..
 **2. Execute the Test Suite**
 Run the Catch2 assertions to mathematically verify the ALU, addressing modes, and control flow logic before execution.
 ```bash
-cmake --build . --target x14_tests
-./x14_tests
+cmake --build . --target lc3_tests
+./lc3_tests
 ```
 
 **3. Compile and Run the VM**
 ```bash
-cmake --build . --target x14
-./x14 path/to/payload.obj
+cmake --build . --target lc3
+./lc3 path/to/payload.obj
 ```
 
 ## Internal Hardware Specifications
