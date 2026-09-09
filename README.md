@@ -56,8 +56,8 @@ cmake -DCMAKE_BUILD_TYPE=Release ..
 **2. Execute the Test Suite**
 Run the Catch2 assertions to mathematically verify the ALU, addressing modes, and control flow logic before execution.
 ```bash
-cmake --build . --target lc3_tests
-./lc3_tests
+cmake --build . --target unit_tests
+./unit_tests
 ```
 
 **3. Compile and Run the VM**
