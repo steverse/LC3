@@ -1,74 +1,153 @@
-# LC-3 Virtual Machine
+# 🖥️ A Computer in a Computer
+*x14 engine — a bare-metal LC-3 virtual machine built from scratch in modern C++20*
 
-A bare-metal, high-performance LC-3 architecture emulator engineered in C++20. The engine is designed with deterministic state management, O(1) instruction dispatch, and strict test-driven development to guarantee cycle-accurate execution. 
+![C++20](https://img.shields.io/badge/C%2B%2B-20-00599C?logo=cplusplus&logoColor=white) ![CMake](https://img.shields.io/badge/build-CMake-064F8C?logo=cmake&logoColor=white) ![Catch2](https://img.shields.io/badge/tests-Catch2-6DB33F) ![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS-lightgrey) ![Status](https://img.shields.io/badge/status-active--development-yellow)
 
+> No operating system. No heap. No shortcuts — just 64KB of memory, eight registers, and a fetch–decode–execute loop pretending to be silicon.
 
+*(Internally called **x14**; compiled here as the `lc3` binary.)*
 
+---
 
+### Contents
+- [What is this, really?](#what-is-this-really)
+- [Why this matters](#why-this-matters)
+- [What it can actually do](#what-it-can-actually-do)
+- [How it fits together](#how-it-fits-together)
+- [Quick start](#quick-start)
+- [Try it out: classic LC-3 programs](#try-it-out-classic-lc-3-programs)
+- [What's next](#whats-next)
+- [A note on how this got built](#a-note-on-how-this-got-built)
+- [Acknowledgments](#acknowledgments)
+- [License](#license)
 
+---
 
-## What This Engine Does & How It Works
+## What is this, really?
 
-The engine is a fully self-contained virtual microcomputer(theoritically this can do everything a normal computer can do). It runs raw binary instructions without relying on an operating system, bridging the gap between high-level code and physical silicon. 
+Most developers never see a CPU directly. There's an operating system, a language runtime, maybe a JIT — layers of abstraction standing between "code" and "electricity." This project strips all of that away.
 
-If you are new to low-level engineering, here is a quick breakdown of what this engine actually does and how it mimics physical hardware:
+It's a software model of a real 16-bit computer: eight registers, a flat 64KB memory space, a fixed instruction set, and nothing else. Feed it a compiled `.obj` binary and it fetches, decodes, and executes each instruction the way physical LC-3 hardware would — including the inconvenient parts, like reading a keypress with no operating system around to hand it to you.
 
-**Core Capabilities**
-* **Executes Raw Machine Code:** It loads and runs compiled `.obj` binary files directly, similar to flashing firmware onto a microcontroller.
-* **Full Instruction Set:** It processes the complete LC-3 architecture instructions, including bitwise math (ADD, AND, NOT), memory handling (LD, ST), and control flow (JMP, BR).
-* **Real-Time I/O:** It handles live keyboard input and terminal output dynamically, bypassing standard C++ stream buffering for a more authentic hardware feel.
-* **Cycle-by-Cycle Stepping:** You can pause the execution loop to inspect exactly what the CPU is doing after every single instruction cycle.
+**LC-3** (Little Computer 3) is a small, teaching-oriented 16-bit ISA designed by Yale Patt and Sanjay Patel for *Introduction to Computing Systems* — one of the most widely used computer-organization textbooks in the world. It's simple enough to understand completely in a semester, but real enough that everything here (registers, condition flags, memory-mapped I/O, instruction dispatch) carries over directly to actual processor design.
 
-**How It Acts Like "Bare-Metal" Hardware**
-* **Strict CPU Simulation:** Instead of using standard variables for math, it strictly uses 8 hardware registers (`R0-R7`), a Program Counter (`PC`), and condition flags (`N, Z, P`). Every operation physically mutates these states, just like a real Arithmetic Logic Unit (ALU).
-* **Flat 64KB Memory:** There is no dynamic memory allocation (no `malloc` or `new`). Code and data share a rigid, pre-allocated array of 65,536 memory slots. 
-* **Memory-Mapped Peripherals:** The keyboard doesn't use `std::cin`. Instead, it acts like physical hardware on a motherboard. It flips a "Ready Bit" at a specific memory address (`KBSR`) and drops the raw keystroke data into another (`KBDR`).
-* **Low-Level Silicon Realities:** It manually handles the physical quirks of computer engineering, like two's complement sign-extension for negative binary numbers and endianness byte-swapping.
+## Why this matters
 
+Every engineer eventually runs into a virtual machine — the JVM, a Python interpreter, a Docker container — but those are process-level abstractions sitting comfortably on top of an operating system. This project sits one level lower, with none of that scaffolding underneath it:
 
+| | **x14** (this project) | JVM *(for comparison)* |
+|---|---|---|
+| Abstraction level | Hardware / silicon | Process / application |
+| Execution model | Register-based, direct opcode dispatch | Stack-based bytecode interpreter |
+| Memory | Fixed 64KB flat array, no heap | Managed heap + garbage collection |
+| What it models | A physical CPU | A portable application runtime |
 
-**A Quick Developer's Note** 
+Both kinds of VM share the same basic idea — compile something high-level down into a binary format a small, fast engine can chew through — but the constraints are opposite. Working at the hardware level forces you to think in registers, flags, and raw bytes instead of objects and exceptions, which is exactly the muscle that computer-architecture and operating-systems courses are built to develop.
 
-* This is my first decently large project, and honestly, I had to learn a *lot* of new and exciting things! But the part I'm most proud of? I built this on my own using online resources, only leaning on AI to clear my conceptual doubts. 
-* Don't get me wrong AI is an amazing coding tool. But getting a bug fixed or a mechanism implemented with a single prompt just takes the joy out of the journey. It might be hyper-efficient, but I really think it does more harm than good in the long run if you're still learning.
-* I'm not foolish enough to say *never* use AI for coding, but to me, as an S3 CSE student, diy seems to give a sense of pride and satisfaction. 
+## What it can actually do
 
+- **Executes real LC-3 machine code.** Loads big-endian `.obj` binaries (16-bit origin header + program image) and runs them directly — no OS, no interpreter shortcuts.
+- **Implements the practical LC-3 instruction set** — arithmetic, control flow, and every addressing mode, decoded and executed entirely in software.
+- **Real, live keyboard I/O.** Reconfigures the host terminal via `termios` (raw mode, no line buffering, no echo) and polls `stdin` non-blockingly, flipping the Keyboard Status Register (`KBSR`, address `0xFE00`) the same way real LC-3 hardware would.
+- **Cycle-level stepping.** Every instruction is a single, deterministic `step()` call, so execution can be paused and inspected one cycle at a time.
+- **O(1) instruction dispatch.** Opcodes resolve through a static function-pointer table (`op_table`) built with `template <unsigned op>` metaprogramming, instead of a 16-way `switch` — the same category of dispatch trick real interpreters and VMs use to avoid branch-heavy hot loops.
+- **Fails safely, not silently.** Fatal execution errors unwind through `<stdexcept>` instead of a hard `std::exit()`, so the host terminal always gets restored to a sane state on the way out.
+- **Verified, not just tested.** Core ALU behavior, register mutation, and memory transitions are checked with Catch2 by injecting hex values directly into memory — the test suite never touches disk I/O.
 
-## Architectural Highlights
-* **O(1) Instruction Dispatch:** Bypasses standard `switch` statement bottlenecks utilizing a static function-pointer array (`op_table`) combined with template metaprogramming (`template <unsigned op>`) for rapid opcode resolution.
-* **POSIX Asynchronous I/O:** Employs raw UNIX file descriptors (`STDIN_FILENO`), `select()` multiplexing, and `termios` mutations to achieve true unbuffered, non-blocking hardware interfacing.
-* **Deterministic Fault Handling:** Replaces volatile `std::exit()` hard crashes with strict `<stdexcept>` stack unwinding, guaranteeing memory safety and host environment stability upon fatal execution faults.
-* **Mathematical TDD Verification:** Core ALU logic, register mutations, and memory state transitions are proven via Catch2 using direct in-memory hexadecimal injection—fully decoupled from disk I/O latency.
-* **Cache-Aligned Memory:** Engineered with rigid bounds checking and zero-initialized arrays (`{0}`) to prevent undefined behavior and ensure predictable CPU booting.
+Supported opcodes:
 
-## Build & Test Pipeline
+| Category | Opcodes |
+|---|---|
+| Arithmetic / Logic | `ADD` `AND` `NOT` |
+| Control Flow | `BR` `JMP` `JSR` `JSRR` |
+| Load | `LD` `LDI` `LDR` `LEA` |
+| Store | `ST` `STI` `STR` |
+| System Calls | `TRAP` |
 
-This repository uses CMake to manage compilation and the Catch2 framework for unit testing. 
+## How it fits together
 
-**1. Clone and Configure**
+```mermaid
+flowchart LR
+    A[".obj binary file"] --> B["Loader<br/>origin address + byte-swap"]
+    B --> C["64KB memory<br/>(65536 x 16-bit words)"]
+    C --> D["Fetch-Decode-Execute<br/>op_table dispatch"]
+    D --> E["Registers<br/>R0-R7, PC, N/Z/P flags"]
+    D --> F["Memory-mapped I/O<br/>KBSR / KBDR"]
+    F --> G["Terminal<br/>raw termios I/O"]
+    E -.next cycle.-> D
+```
+
+```
+LC3/
+├── src/           VM engine — fetch-decode-execute loop, op_table, memory, I/O
+├── tests/         Catch2 unit tests (in-memory verification, no disk I/O)
+├── examples/      drop 2048.obj / rogue.obj here — see below
+└── CMakeLists.txt
+```
+
+## Quick start
+
+**Prerequisites:** Linux or macOS (the I/O layer relies on POSIX `termios`/`select()`, so Windows needs WSL), CMake, and a C++20-capable compiler (recent GCC or Clang both work).
+
 ```bash
-git clone [https://github.com/steverse/x14-engine.git](https://github.com/steverse/LC3.git)
+# 1. Clone the repository
+git clone https://github.com/steverse/LC3.git
 cd LC3
+
+# 2. Configure the build
 mkdir build && cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
-```
 
-**2. Execute the Test Suite**
-Run the Catch2 assertions to mathematically verify the ALU, addressing modes, and control flow logic before execution.
-```bash
+# 3. Build and run the test suite (Catch2)
 cmake --build . --target unit_tests
 ./unit_tests
-```
 
-**3. Compile and Run the VM**
-```bash
+# 4. Build and run the VM
 cmake --build . --target lc3
-./lc3 path/to/payload.obj
+./lc3 path/to/program.obj
 ```
 
-## Internal Hardware Specifications
+## Try it out: classic LC-3 programs
 
-* **Memory Space:** 65,536 locations (16-bit addressability)
-* **Registers:** 8 general-purpose registers (R0-R7), Program Counter (PC), Condition Codes (N, Z, P)
-* **Supported Opcodes:** Complete LC-3 ISA (ADD, AND, NOT, BR, JMP, JSR, JSRR, LD, LDI, LDR, LEA, ST, STI, STR, TRAP)
-* **Memory-Mapped I/O:** Keyboard Status Register (KBSR), Keyboard Data Register (KBDR)
+The two programs almost everyone uses to test-drive an LC-3 VM are **`2048.obj`** (written by Ryan Pendleton) and **`rogue.obj`** (written by Justin Meiners), both originally built for the [*Write your own virtual machine*](https://www.jmeiners.com/lc3-vm/) tutorial. Grab them from the [tutorial's repository](https://github.com/justinmeiners/lc3-vm) (MIT licensed), drop them into an `examples/` folder at the project root, then run them like any other program image — from the project root:
+
+```bash
+./build/lc3 examples/2048.obj
+./build/lc3 examples/rogue.obj
+```
+
+`2048` is a solid stress test for arithmetic and addressing modes; `rogue` leans harder on branching and live keyboard input.
+
+## What's next
+
+**ImpLC** is the planned next layer: a small imperative language (`.imp`) with its own compiler, targeting this VM's `.obj` format directly.
+
+```
+ImpLC source (.imp)  ->  ImpLC compiler  ->  LC-3 object code (.obj)  ->  x14
+```
+
+The interesting problems here are the ones any real compiler backend runs into: fitting variables into 8 registers, tracking condition-flag state across expressions, and staying inside a 16-bit address space.
+
+Beyond that, the roadmap looks roughly like:
+
+- [ ] Expand Catch2 coverage to every opcode and memory edge case
+- [ ] Encapsulate registers and memory behind a real class boundary, out of raw globals
+- [ ] CI via GitHub Actions — GCC + Clang, AddressSanitizer, UBSan
+- [ ] An interactive CLI debugger — breakpoints, single-step, live register/memory inspection
+- [ ] Stricter image-loading validation — file-size checks, origin bounds, endianness handling
+- [ ] The ImpLC compiler front-end described above
+
+x14 also doubles as the deterministic C++ scaffold for **xNULL**, a longer-running side exploration into reversible computing — architectures where every instruction has a well-defined inverse, so execution could in principle be stepped backward, not just forward. It's early and exploratory, but the long-term ambition is a formal write-up, ideally aimed at an IEEE-style venue.
+
+## A note on how this got built
+
+This started as coursework and turned into a proper systems project — built independently, mostly from the LC-3 spec and primary sources, with AI used only to unblock conceptual questions rather than to write the implementation. If you're a student reading this: getting the two's-complement sign-extension wrong, then figuring out why, is where most of the actual learning happens. There's no real shortcut for that part.
+
+## Acknowledgments
+
+- The LC-3 architecture was designed by Yale Patt and Sanjay Patel for *Introduction to Computing Systems*.
+- `2048.obj` and `rogue.obj` come from Justin Meiners and Ryan Pendleton's [*Write your own virtual machine*](https://www.jmeiners.com/lc3-vm/) tutorial, MIT licensed.
+
+## License
+
+No license has been added to this repository yet — until then, all rights are reserved by default. Open an issue or reach out if you'd like to use or build on this work.
