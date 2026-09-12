@@ -146,7 +146,7 @@ This started as coursework and turned into a proper systems project — built in
 ## Acknowledgments
 
 - The LC-3 architecture was designed by Yale Patt and Sanjay Patel for *Introduction to Computing Systems*.
-- `2048.obj` and `rogue.obj` come from Justin Meiners and Ryan Pendleton's [*Write your own virtual machine*](https://www.jmeiners.com/lc3-vm/) tutorial, MIT licensed.
+- `2048.obj` and `rogue.obj` and the structure come from Justin Meiners and Ryan Pendleton's [*Write your own virtual machine*](https://www.jmeiners.com/lc3-vm/) tutorial, MIT licensed.
 
 ## License
 
