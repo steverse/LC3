@@ -174,8 +174,11 @@ static void ins(lc3 *vm, uint16_t instr)
         {
         case lc3::TRAP_GETC:
         {
-            char c = 0;
-            read(STDIN_FILENO, &c, 1); // read directly from os kerenl's buffer replacment for cin(idk error)
+            
+       char c = 0;
+       if (read(STDIN_FILENO, &c, 1) <= 0) {
+    
+       c = 0; } // read directly from os kerenl's buffer replacment for cin(idk error)
             vm->reg[lc3::R_R0] = static_cast<uint16_t>(c);
             vm->update_flags(lc3::R_R0);
             break;
@@ -200,8 +203,8 @@ static void ins(lc3 *vm, uint16_t instr)
         case lc3::TRAP_IN:
         {
             std::cout << "Enter a character: " << std::flush;
-            char c = 0;
-            read(STDIN_FILENO, &c, 1);
+             char c = 0;
+            if (read(STDIN_FILENO, &c, 1) <= 0) { c = 0; }
             std::cout << c << std::flush;
             vm->reg[lc3::R_R0] = static_cast<uint16_t>(c);
             vm->update_flags(lc3::R_R0);
@@ -356,7 +359,7 @@ uint16_t lc3::memory_read(uint16_t address)
         {
             memory[MR_KBSR] = 0;
             char c = 0;
-            read(STDIN_FILENO, &c, 1); // Reads directly from the POSIX file descriptor
+            if (read(STDIN_FILENO, &c, 1) <= 0) { c = 0; } // Reads directly from the POSIX file descriptor
             memory[MR_KBDR] = static_cast<uint16_t>(c);
         }
         else
