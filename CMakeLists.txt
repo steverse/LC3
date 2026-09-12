@@ -24,7 +24,7 @@ add_executable(unit_tests tests/test_main.cpp)
 target_link_libraries(unit_tests PRIVATE lc3_core Catch2)
 
 
-# Add the main executable target (adjust src/main.cpp to your actual entry point file)
+# Add the main executable target (point src/main.cpp to your actual entry point)
 add_executable(lc3 src/main.cpp)
 
 # Link the core VM logic
