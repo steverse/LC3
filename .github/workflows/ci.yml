@@ -1,6 +1,6 @@
 name: LC3 Core CI
 
-on:
+"on":
   push:
     branches: [ main, polishing ]
   pull_request:
