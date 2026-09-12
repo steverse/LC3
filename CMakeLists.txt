@@ -22,3 +22,10 @@ FetchContent_MakeAvailable(Catch2)
 #  Assemble the test binary target and link it
 add_executable(unit_tests tests/test_main.cpp)
 target_link_libraries(unit_tests PRIVATE lc3_core Catch2)
+
+
+# Add the main executable target (adjust src/main.cpp to your actual entry point file)
+add_executable(lc3 src/main.cpp)
+
+# Link the core VM logic
+target_link_libraries(lc3 PRIVATE lc3_core)
