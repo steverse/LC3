@@ -176,9 +176,7 @@ static void ins(lc3 *vm, uint16_t instr)
         {
             
        char c = 0;
-       if (read(STDIN_FILENO, &c, 1) <= 0) {
-    
-       c = 0; } // read directly from os kerenl's buffer replacment for cin(idk error)
+       if (read(STDIN_FILENO, &c, 1) <= 0) {c = 0; } // read directly from os kerenl's buffer replacment for cin(idk error)
             vm->reg[lc3::R_R0] = static_cast<uint16_t>(c);
             vm->update_flags(lc3::R_R0);
             break;
