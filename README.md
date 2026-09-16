@@ -31,6 +31,8 @@ It's a software model of a real 16-bit computer: eight registers, a flat 64KB me
 
 **LC-3** (Little Computer 3) is a small, teaching-oriented 16-bit ISA designed by Yale Patt and Sanjay Patel for *Introduction to Computing Systems* — one of the most widely used computer-organization textbooks in the world. It's simple enough to understand completely in a semester, but real enough that everything here (registers, condition flags, memory-mapped I/O, instruction dispatch) carries over directly to actual processor design.
 
+The goal of this project wasn't to write enterprise software; it was to build a highly deterministic software-defined CPU for hardware control. Using a contiguous uint16_t array guarantees O(1) memory access, which is strictly required to maintain predictable clock cycles for hardware synchronization. Refactoring this into an OOP architecture with virtual dispatch or sparse memory structures would introduce latency spikes, cache misses, and pipeline stalls. This is written in a procedural, bare-metal style because it is fundamentally a systems engineering project, not a high-level application.
+
 ## Why this matters
 
 Every engineer eventually runs into a virtual machine — the JVM, a Python interpreter, a Docker container — but those are process-level abstractions sitting comfortably on top of an operating system. This project sits one level lower, with none of that scaffolding underneath it:
