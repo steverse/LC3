@@ -83,9 +83,31 @@ flowchart LR
 LC3/
 ├── src/           VM engine — fetch-decode-execute loop, op_table, memory, I/O
 ├── tests/         Catch2 unit tests (in-memory verification, no disk I/O)
-├── examples/      drop 2048.obj / rogue.obj here — see below
+├── examples/      2048.obj / rogue.obj
+├── web/           Interactive Web-Based IDE & Visualizer (React + Vite + TypeScript)
 └── CMakeLists.txt
 ```
+
+## 🌐 Web-Based Visualizer & IDE
+
+![LC-3 Web Visualizer Screenshot](web/docs/screenshots/ui-overview.png)
+
+An interactive browser-based LC-3 IDE and simulator featuring:
+- **Monaco Code Editor** with custom LC-3 syntax tokenization & starter templates
+- **In-Browser Two-Pass Assembler** (`.asm` -> 16-bit machine code)
+- **Time-Travel Debugging** (`⏮ Back` / `F11` cycle undo)
+- **CPU Micro-Architecture Pipeline Visualizer** (Fetch -> Decode -> Execute stages)
+- **Live Plain-English Translation** of instructions at PC
+- **Interactive Terminal** via `xterm.js` supporting raw keyboard I/O (`GETC`, `IN`) & MMIO (`KBSR`, `KBDR`)
+- **Memory Inspector** with margin breakpoint toggles and PC auto-follow
+
+```bash
+cd web
+npm install
+npm run dev
+# Visit http://localhost:5173/
+```
+Refer to [`web/README.md`](web/README.md) for details.
 
 ## Quick start
 

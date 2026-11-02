@@ -14,3 +14,15 @@ bin/
 .DS_Store
 .vscode/
 .idea/
+
+# Web frontend
+web/node_modules/
+web/dist/
+web/dist-ssr/
+web/*.local
+web/.vite/
+web/*.tsbuildinfo
+
+# Keep sample binaries
+!examples/*.obj
+!web/public/examples/*.obj
